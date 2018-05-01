@@ -1,0 +1,22 @@
+{
+  "name": "coinpocket",
+  "version": "1.0.0",
+  "description": "```sh npm install -g truffle",
+  "main": "server.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jimliuxyz/coinpocket.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jimliuxyz/coinpocket/issues"
+  },
+  "homepage": "https://github.com/jimliuxyz/coinpocket#readme"
+}
