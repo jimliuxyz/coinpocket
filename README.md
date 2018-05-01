@@ -1,6 +1,23 @@
 # coinpocket
 
-# 過程紀錄
+# 編譯與佈建合約
+```sh
+# 1.Remove the build folder
+rm -r build/
+truffle compile
+truffle migrate
+
+# 2.Use
+truffle migrate --reset --all
+```
+
+# 測試合約 (Mocha testing)
+```sh
+# test all scripts of ./test
+truffle test
+```
+
+# 環境建立過程紀錄
 ```sh
 npm install -g truffle
 

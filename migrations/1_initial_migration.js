@@ -1,5 +1,5 @@
-var Migrations = artifacts.require("./Migrations.sol");
+var CoinPocket = artifacts.require("./CoinPocket.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(Migrations);
+  deployer.deploy(CoinPocket);
 };
