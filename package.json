@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node server.js"
   },
   "repository": {
     "type": "git",
@@ -20,11 +20,16 @@
   },
   "homepage": "https://github.com/jimliuxyz/coinpocket#readme",
   "dependencies": {
+    "bignumber.js": "^7.0.1",
     "body-parser": "^1.18.2",
+    "commander": "^2.15.1",
     "express": "^4.16.3",
+    "json-rpc2": "^1.0.2",
     "jsonwebtoken": "^8.2.1",
     "mongoose": "^5.0.17",
     "morgan": "^1.9.0",
+    "socket.io": "^2.1.0",
+    "socketio-wildcard": "^2.0.0",
     "truffle-contract": "^3.0.5",
     "web3": "^0.19.0"
   }

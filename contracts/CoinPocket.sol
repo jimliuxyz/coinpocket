@@ -2,21 +2,26 @@ pragma solidity ^0.4.17;
 
 contract CoinPocket {
     
-    event txlog(string dtypes, string action, uint amount);
+    event txlog(string dtypes, string action, uint amount, address receiver);
 
     uint constant DTYPELEN = 2;
     string[] dtypes = ["TWD", "USD"];
     enum DollarType{
-        TWD, USD, _END
+        TWD, USD, _length
     }
 
     struct Account {
         uint[DTYPELEN] dollar;
     }
     
+    address public minter;
+    
     constructor() public{
-        users[this].dollar[uint(DollarType.TWD)] = 5000;
-        users[this].dollar[uint(DollarType.USD)] = 3000;
+        minter = msg.sender;
+        //keyword 'this' means 'contract account'
+        
+        users[minter].dollar[uint(DollarType.TWD)] = 10000;
+        users[minter].dollar[uint(DollarType.USD)] = 10000;
     }
     
     mapping (address => Account) users;
@@ -24,7 +29,7 @@ contract CoinPocket {
     modifier checkType(uint dtype){
         require(dtype>=0 && dtype<dtypes.length
             && DTYPELEN == dtypes.length
-            && DTYPELEN == uint(DollarType._END)-1
+            && DTYPELEN == uint(DollarType._length)
             , "dtype error!");
         _;
     }
@@ -32,29 +37,36 @@ contract CoinPocket {
     modifier enought(uint dtype, uint amount){
         require(users[msg.sender].dollar[dtype]>=amount
             , "insufficient balance!");
-        require(users[this].dollar[dtype]>=amount
-            , "insufficient balance of contract!!!");
         _;
     }
 
+    //mint for free
     function deposit(uint dtype, uint amount) checkType(dtype) public{
         users[msg.sender].dollar[dtype] += amount;
-        users[this].dollar[dtype] += amount;
-        emit txlog(dtypes[dtype], "deposit", amount);
+        emit txlog(dtypes[dtype], "deposit", amount, msg.sender);
     }
     
     function withdraw(uint dtype, uint amount) checkType(dtype) enought(dtype, amount) public{
         users[msg.sender].dollar[dtype] -= amount;
-        users[this].dollar[dtype] -= amount;
-        emit txlog(dtypes[dtype], "withdraw", amount);
+        emit txlog(dtypes[dtype], "withdraw", amount, msg.sender);
+    }
+    
+    function transfer(uint dtype, uint amount, address receiver)checkType(dtype) enought(dtype, amount) public{
+        users[msg.sender].dollar[dtype] -= amount;
+        users[receiver].dollar[dtype] += amount;
+        emit txlog(dtypes[dtype], "transfer", amount, receiver);
     }
     
     function detail() constant public returns(uint[DTYPELEN]){
         return users[msg.sender].dollar;
     }
 
-    function detail_pool() constant public returns(uint[DTYPELEN]){
-        return users[this].dollar;
+    function detail_minter() constant public returns(uint[DTYPELEN]){
+        return users[minter].dollar;
+    }
+    
+    function wei_balance() constant public returns(uint){
+        return msg.sender.balance;
     }
     
     function sayHello() pure public returns(string){
