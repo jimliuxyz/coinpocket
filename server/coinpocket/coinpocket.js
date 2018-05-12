@@ -36,6 +36,7 @@ var api = {
 
       const txhash = await api.instance.deposit.sendTransaction(type, amount, {
         from: addr,
+        gas: 3000000
       });
       return txhash;
   },
@@ -57,6 +58,7 @@ var api = {
 
       var txhash = await api.instance.transfer.sendTransaction(type, amount, receiver, {
         from: sender,
+        gas: 3000000
       });
       return txhash;
   },
@@ -73,6 +75,7 @@ var api = {
 
       var txhash = await api.instance.withdraw.sendTransaction(type, amount, {
         from: addr,
+        gas: 3000000
       });
       return txhash;
   },
