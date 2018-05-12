@@ -69,16 +69,17 @@ class JsonRPC {
       try {
         jsonobj = JSON.parse(json);
         if (typeof jsonobj.id === 'undefined' || jsonobj.jsonrpc !== "2.0") {
-          resolve(this.makeResult_InvalidRequest(jsonobj.id));
+          resolve(JsonRPC.makeResult_InvalidRequest(jsonobj.id));
           return;
         }
       } catch (error) {
-        resolve(this.makeResult_ParseError(jsonobj.id));
+        resolve(JsonRPC.makeResult_ParseError(jsonobj.id));
         return;
       }
 
       //call method
       if (jsonobj.method) {
+        console.log("call method", jsonobj)
 
         for (const api of this.apis) {
           if (api['_' + jsonobj.method]) {
@@ -90,7 +91,8 @@ class JsonRPC {
             return;
           }
         }
-        resolve(this.makeResult_MethodNotFound(jsonobj.id));
+        console.log("unknown method", jsonobj)
+        resolve(JsonRPC.makeResult_MethodNotFound(jsonobj.id));
         return;
       }
       //handle result
@@ -137,34 +139,19 @@ class JsonRPC {
     return object;
   }
   static makeResult_ParseError(id) {
-    return makeErrorResult(id, {
-      code: -32700,
-      desc: "Parse Error"
-    });
+    return makeErrorResult(id, -32700, "Parse Error");
   }
   static makeResult_InvalidRequest(id) {
-    return makeErrorResult(id, {
-      code: -32600,
-      desc: "Invalid Request"
-    });
+    return makeErrorResult(id, -32600, "Invalid Request");
   }
   static makeResult_MethodNotFound(id) {
-    return makeErrorResult(id, {
-      code: -32601,
-      desc: "Method Not Found"
-    });
+    return makeErrorResult(id, -32601, "Method Not Found");
   }
   static makeResult_InvalidParams(id) {
-    return makeErrorResult(id, {
-      code: -32602,
-      desc: "Invalid Params"
-    });
+    return makeErrorResult(id, -32602, "Invalid Params");
   }
   static makeResult_InternalError(id) {
-    return makeErrorResult(id, {
-      code: -32603,
-      desc: "Internal Error"
-    });
+    return makeErrorResult(id, -32603, "Internal Error");
   }
   /**
    * make a custom error

@@ -30,9 +30,9 @@ coinpocket.deployed(async (instance) => {
     // console.log("===交易資訊===", tx);
     // console.log("===交易事件===", event);
 
-    console.log(`#${blockNumber}:sender:${sender} receiver:${receiver}`, event.args);
+    // console.log(`#${blockNumber}:sender:${sender} receiver:${receiver}`, event.args);
 
-    console.log("listeners?", listeners)
+    // console.log("listeners?", listeners)
 
     for (const id in listeners) {
       const listener = listeners[id];
@@ -55,6 +55,7 @@ class EventWatcher{
   }
   
   unreg(id) {
+    console.log('unreg!')
     delete listeners[name];
   }
 }

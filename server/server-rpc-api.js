@@ -45,6 +45,14 @@ const API = {
     code: 102,
     desc: 'ERR_JWT_EXPIRED'
   },
+  ERR_TRANSACTION_FAILED: {
+    code: 103,
+    desc: 'ERR_TRANSACTION_FAILED'
+  },
+  ERR_TRANSFER_FAILED: {
+    code: 104,
+    desc: 'ERR_TRANSFER_FAILED'
+  },
 
   /**
    * generate the 'login' request (for caller)
@@ -60,6 +68,9 @@ const API = {
     });
   },
 
+  logout(name, pwd, token) {
+    return JsonRPC.makeRequest('login', {});
+  },
 
   /**
    * watch the contract event
@@ -73,11 +84,54 @@ const API = {
    */
   listReceipt() {
     return JsonRPC.makeRequest('listReceipt', {});
-  }
+  },
+
+  balance(type, amount) {
+    return JsonRPC.makeRequest('balance', {});
+  },
+  
+  /**
+   * deposit money into user addr
+   * @param {number} type
+   * @param {number} amount
+   */
+  deposit(type, amount) {
+    return JsonRPC.makeRequest('deposit', {
+      type,
+      amount
+    });
+  },  
+  /**
+   * withdraw money from user addr
+   * @param {number} type
+   * @param {number} amount
+   */
+  withdraw(type, amount) {
+    return JsonRPC.makeRequest('withdraw', {
+      type,
+      amount
+    });
+  },  
+  /**
+   * transfer money user addr to account
+   * @param {number} type
+   * @param {number} amount
+   * @param {string} account
+   */
+  transfer(type, amount, receiver) {
+    return JsonRPC.makeRequest('transfer', {
+      type,
+      amount,
+      receiver
+    });
+  },
+
 }
 
 const TOKEN_EXPIRES = 60;
 const users = {};
+const addrMap = {}; //indexed by addr
+const userMap = {}; //indexed by username
 
 /**
  * sign jwt by payload
@@ -94,17 +148,39 @@ function signJwt(user) {
   })
 }
 
-async function addr2User(addr) {
+async function addr2username(addr) {
+  if (addrMap[addr]) return addrMap[addr];
+
   const user = await User.findOne({
     addr
   });
-  return user?user.name:addr;
+
+  if (user) {
+    addrMap[addr] = user.name;
+    userMap[user.name] = addr;
+  }
+  return user ? user.name : undefined;
 }
 
+async function username2addr(name) {
+  if (userMap[name]) return userMap[name];
+
+  const user = await User.findOne({
+    name
+  });
+
+  if (user) {
+    addrMap[addr] = user.name;
+    userMap[user.name] = addr;
+  }
+  return user ? user.addr : undefined;
+}
+let idcnt = 0;
 
 class Service {
 
   constructor() {
+    this.id = ++idcnt
     this.user;
     this.jwtoken;
   }
@@ -116,6 +192,7 @@ class Service {
    */
   guard(jsonobj) {
     if (!this.user && jsonobj.method !== 'login') {
+      console.error("you're not logged!!")
       return false;
     }
     return true;
@@ -123,11 +200,11 @@ class Service {
 
   /**
    * receipt addr to username
-   * @param {*} receipt a normalized txEvent
+   * @param {*} receipt a receiptlized txEvent
    */
-  async normalizeReceipt(receipt) {
-    receipt.receiver = await addr2User(receipt.receiver);
-    receipt.sender = await addr2User(receipt.sender);
+  async userlizeReceipt(receipt) {
+    receipt.receiver = (await addr2username(receipt.receiver)) || receipt.receiver;
+    receipt.sender = (await addr2username(receipt.sender)) || receipt.sender;
   }
 
   async _listReceipt(id, params, resolve) {
@@ -135,16 +212,19 @@ class Service {
     const list = await coinpocket.listReceipt(this.user.addr, async list => {
       //map addr to username
       await utils.asyncForEach(list, async receipt => {
-        // receipt.receiver = await addr2User(receipt.receiver);
-        // receipt.sender = await addr2User(receipt.sender);
-        await this.normalizeReceipt
-        (receipt);
+        await this.userlizeReceipt(receipt);
       })
 
       return resolve(JsonRPC.makeResult(id, {
         list,
       }));
     });
+  }
+
+  /**
+   * watch events (this function is overrided by server.js)
+   */
+  async _watchEvent(id, params, resolve) {
   }
 
   /**
@@ -158,6 +238,7 @@ class Service {
     if (typeof params.name === 'string' && typeof params.pwd === 'string') {
       const name = params.name
       const pwd = params.pwd
+      console.log("params.name/pwd ", name, pwd)
 
       //find user
       User.findOne({
@@ -184,7 +265,7 @@ class Service {
             };
 
             //resign a new token
-            const token = signJwt(user);
+            const token = signJwt(this.user);
             return resolve(JsonRPC.makeResult(id, {
               ok: true,
               token
@@ -193,6 +274,7 @@ class Service {
         } else {
           //existing user
           this.user = user;
+          console.log('existing user', user)
 
           //resign a new token
           const token = signJwt(user);
@@ -203,17 +285,17 @@ class Service {
         }
       })
     } else if (typeof params.token === 'string') {
-      jwt.verify(params.token, config.jwt.secret, function (err, decoded) {
+      jwt.verify(params.token, config.jwt.secret, (err, decoded) => {
         if (err)
           return resolve(JsonRPC.makeResult_CustomError(id, API.ERR_JWT_EXPIRED));
-
+        
         User.findOne({
           name: decoded.name
         }, async (err, user) => {
           if (err)
             return resolve(JsonRPC.makeResult_CustomError(id, API.ERR_JWT_EXPIRED));
 
-          this.user = user;
+            this.user = user;
 
           //resign a new token
           const token = signJwt(user);
@@ -226,6 +308,78 @@ class Service {
     } else
       return resolve(JsonRPC.makeResult_InvalidParams(id));
   }
+
+  async _balance(id, params, resolve) {
+    const addr = this.user.addr;
+    const balance = await coinpocket.balance(addr);
+
+    return resolve(JsonRPC.makeResult(id, {
+      balance,
+    }));
+  }
+
+  async _deposit(id, params, resolve) {
+    if (typeof params.type === 'number' && typeof params.amount === 'number') {
+      const type = params.type;
+      const amount = params.amount;
+      const addr = this.user.addr;
+      const passphrase = "";
+
+      try {
+        const txhash = await coinpocket.deposit(addr, type, amount, passphrase);
+        return resolve(JsonRPC.makeResult(id, {
+          txhash,
+        }));
+      } catch (error) {
+        console.log(error)
+        return resolve(JsonRPC.makeResult_CustomError(id, API.ERR_TRANSACTION_FAILED));
+      }
+    }
+  }
+  
+  async _withdraw(id, params, resolve) {
+    if (typeof params.type === 'number' && typeof params.amount === 'number') {
+      const type = params.type;
+      const amount = params.amount;
+      const addr = this.user.addr;
+      const passphrase = "";
+      try {
+        const txhash = await coinpocket.withdraw(addr, type, amount, passphrase);
+        return resolve(JsonRPC.makeResult(id, {
+          txhash,
+        }));
+      } catch (error) {
+        console.log(error)
+        return resolve(JsonRPC.makeResult_CustomError(id, API.ERR_TRANSACTION_FAILED));
+      }
+    }
+  }
+  
+  async _transfer(id, params, resolve) {
+    if (typeof params.type === 'number' && typeof params.amount === 'number' && typeof params.receiver === 'string') {
+      const type = params.type;
+      const amount = params.amount;
+      const sender = this.user.addr;
+      const receiver = await User.findOne({
+        name: params.receiver
+      });
+      if (!receiver) {
+        return resolve(JsonRPC.makeResult_CustomError(id, API.ERR_TRANSFER_FAILED))
+      }
+
+      const passphrase = "";
+      try {
+        const txhash = await coinpocket.transfer(sender, receiver.addr, type, amount, passphrase);
+        return resolve(JsonRPC.makeResult(id, {
+          txhash,
+        }));
+      } catch (error) {
+        console.log(error)
+        return resolve(JsonRPC.makeResult_CustomError(id, API.ERR_TRANSACTION_FAILED));
+      }
+    }
+  }
+
 }
 
 module.exports.API = API

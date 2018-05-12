@@ -31,17 +31,13 @@ var api = {
    * @param {number} type
    * @param {number} amount
    */
-  deposit: async (addr, type, amount) => {
-    try {
-      await api.web3.personal.unlockAccount(addr);
+  deposit: async (addr, type, amount, passphrase) => {
+      await api.web3.personal.unlockAccount(addr, passphrase);
 
       const txhash = await api.instance.deposit.sendTransaction(type, amount, {
         from: addr,
       });
       return txhash;
-    } catch (error) {
-      console.error(error)
-    }
   },
 
   /**
@@ -52,9 +48,8 @@ var api = {
    * @param {number} amount
    * @return {string} transaction hash
    */
-  transfer: async (sender, receiver, type, amount) => {
-    try {
-      await api.web3.personal.unlockAccount(sender);
+  transfer: async (sender, receiver, type, amount, passphrase) => {
+      await api.web3.personal.unlockAccount(sender, passphrase);
 
       // var data = await api.instance.transfer(0, 1, receiver, {
       //   from: sender,
@@ -64,9 +59,6 @@ var api = {
         from: sender,
       });
       return txhash;
-    } catch (error) {
-      console.error(error)
-    }
   },
 
   /**
@@ -76,17 +68,13 @@ var api = {
    * @param {number} amount
    * @return {string} transaction hash
    */
-  withdraw: async (addr, type, amount) => {
-    try {
-      await api.web3.personal.unlockAccount(addr);
+  withdraw: async (addr, type, amount, passphrase) => {
+      await api.web3.personal.unlockAccount(addr, passphrase);
 
       var txhash = await api.instance.withdraw.sendTransaction(type, amount, {
         from: addr,
       });
       return txhash;
-    } catch (error) {
-      console.error(error)
-    }
   },
 
   /**
@@ -94,7 +82,7 @@ var api = {
    * @param {string} addr
    * @return {Promise<string[]>} balance of each Dollar
    */
-  detail: async (addr) => {
+  balance: async (addr) => {
     const data = await api.instance.detail({
       from: addr
     })
@@ -108,7 +96,6 @@ var api = {
    * @return {Promise<string>} addr
    */
   newAccount: async (passphrase) => {
-    try {
       const account = await api.web3.personal.newAccount(passphrase);
 
       //give some money as gas to account to make it able to transaction
@@ -117,21 +104,17 @@ var api = {
         to: account,
         value: api.web3.toWei(0.1, "ether")
       });
-
       return account
-    } catch (error) {
-      console.error(error)
-    }
   },
 
-  normalizeTxEvent: async (event) => {
+  receiptlizeTxEvent: async (event) => {
     const tx = api.web3.eth.getTransaction(event.transactionHash);
     const sender = tx.from;
     const receiver = event.args.receiver;
     return {
       txhash: event.transactionHash,
       sender,
-      dtypes: event.args.amount,
+      dtypes: event.args.dtypes,
       action: event.args.action,
       amount: event.args.amount,
       receiver: event.args.receiver,
@@ -155,7 +138,7 @@ var api = {
       const list = [];
       if (!err) {
         await utils.asyncForEach(events, async event => {
-          const receipt = await api.normalizeTxEvent(event);
+          const receipt = await api.receiptlizeTxEvent(event);
           if (receipt && (addr == receipt.sender || addr == receipt.receiver))
             list.push(receipt);
         })

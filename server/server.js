@@ -14,6 +14,7 @@ var PORT = 8081;
 
 
 io.on('connection', function (socket) {
+  console.log('new connection~')
 
   const service = new ServerRpcService();
   const jsonrpc = new JsonRPC([service]);
@@ -24,12 +25,18 @@ io.on('connection', function (socket) {
   service._watchEvent = (id, params, resolve) => {
     if (listening) return;
     watcher.reg(service.user.name, service.user.addr, async event => {
-      let receipt = await coinpocket.normalizeTxEvent(event);
-      await service.normalizeReceipt(receipt);
+      let receipt = await coinpocket.receiptlizeTxEvent(event);
+      await service.userlizeReceipt(receipt);
 
       const notify = ClientRpcAPI.takeReceipt(receipt);
-      socket.emit('jsonrpc', notify.toJson());
+      setTimeout(() => {
+        socket.emit('jsonrpc', notify.toJson());
+      }, 1000);
     });
+  }
+
+  service._logout = (id, params, resolve) => {
+    socket.disconnect()
   }
 
   //handle jsonrpc
@@ -48,7 +55,6 @@ io.on('connection', function (socket) {
       listening = false;
       watcher.unreg(service.user.name);
     }
-
   })
 
 })
@@ -58,11 +64,8 @@ coinpocket.deployed(ready => {
   if (ready) {
     var sio = app.listen(PORT);
     console.log('app listen at ' + PORT);
-  }
-  else {
+  } else {
     console.log('contract not deployed! try "truffle migrate --reset" to deploy the contract');
     process.exit(1);
   }
 })
-
-

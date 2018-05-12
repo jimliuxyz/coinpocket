@@ -10,7 +10,7 @@ var PORT = 8081;
 var io = require('socket.io-client');
 
 (function () {
-  var socket = io('ws://localhost:8081');
+  var socket = io('http://localhost:8081');
 
   socket.on('jsonrpc', function (json) {
     // console.log('got ....', json)
@@ -23,7 +23,7 @@ var io = require('socket.io-client');
     console.log("connected...")
 
     //try login...
-    const request = sapi.login('jim3', '123');
+    const request = sapi.login('jim5', '123');
     jsonrpc.bindResultHandler(request, result => {
       if (result.ok) {
         console.log('login ok! ', result);
@@ -31,6 +31,21 @@ var io = require('socket.io-client');
         jsonrpc.bindResultHandler(request, result => {
           console.log('my events! ', result);
           socket.emit('jsonrpc', sapi.watchEvent().toJson());
+
+          const request = sapi.deposit(0, 88);
+          jsonrpc.bindResultHandler(request, result => {
+            console.log("tx?", result);
+
+            const request = sapi.transfer(0, 5, "jim7");
+            jsonrpc.bindResultHandler(request, result => {
+              console.log("tx?", result);
+              
+            });
+            socket.emit('jsonrpc', request.toJson());
+            
+          });
+          socket.emit('jsonrpc', request.toJson());
+
         });
         socket.emit('jsonrpc', request.toJson());
       }
@@ -44,7 +59,6 @@ var io = require('socket.io-client');
 
 
 
-  setTimeout(() => {
-  }, 1000);
+  setTimeout(() => {}, 1000);
 
 })()
