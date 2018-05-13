@@ -14,9 +14,13 @@ var api = {
    */
   deployed: (callback) => {
     // console.log("waiting contract deployed response...");
-    return api.contract.deployed().then((instance) => {
+    return api.contract.deployed().then(async (instance) => {
         if (!api.instance)
           console.log(`contract addr : ${instance.address}`);
+
+        // const balance_coinbase = await api.web3.eth.getBalance(api.web3.eth.coinbase)
+        // console.log("coinbase : ", balance_coinbase.toString())
+
         api.instance = instance;
         callback(instance);
       })
@@ -32,13 +36,17 @@ var api = {
    * @param {number} amount
    */
   deposit: async (addr, type, amount, passphrase) => {
-      await api.web3.personal.unlockAccount(addr, passphrase);
+    await api.web3.personal.unlockAccount(addr, passphrase);
 
-      const txhash = await api.instance.deposit.sendTransaction(type, amount, {
-        from: addr,
-        gas: 3000000
-      });
-      return txhash;
+    const balance = await api.web3.eth.getBalance(addr)
+    console.log(balance.toString())
+
+    const txhash = await api.instance.deposit.sendTransaction(type, amount, {
+      from: addr,
+      gas: 300000,
+      gasPrice: api.web3.toWei(1, 'wei'),
+    });
+    return txhash;
   },
 
   /**
@@ -50,17 +58,18 @@ var api = {
    * @return {string} transaction hash
    */
   transfer: async (sender, receiver, type, amount, passphrase) => {
-      await api.web3.personal.unlockAccount(sender, passphrase);
+    await api.web3.personal.unlockAccount(sender, passphrase);
 
-      // var data = await api.instance.transfer(0, 1, receiver, {
-      //   from: sender,
-      // })
+    // var data = await api.instance.transfer(0, 1, receiver, {
+    //   from: sender,
+    // })
 
-      var txhash = await api.instance.transfer.sendTransaction(type, amount, receiver, {
-        from: sender,
-        gas: 3000000
-      });
-      return txhash;
+    var txhash = await api.instance.transfer.sendTransaction(type, amount, receiver, {
+      from: sender,
+      gas: 300000,
+      gasPrice: api.web3.toWei(1, 'wei'),
+    });
+    return txhash;
   },
 
   /**
@@ -71,13 +80,14 @@ var api = {
    * @return {string} transaction hash
    */
   withdraw: async (addr, type, amount, passphrase) => {
-      await api.web3.personal.unlockAccount(addr, passphrase);
+    await api.web3.personal.unlockAccount(addr, passphrase);
 
-      var txhash = await api.instance.withdraw.sendTransaction(type, amount, {
-        from: addr,
-        gas: 3000000
-      });
-      return txhash;
+    var txhash = await api.instance.withdraw.sendTransaction(type, amount, {
+      from: addr,
+      gas: 300000,
+      gasPrice: api.web3.toWei(1, 'wei'),
+    });
+    return txhash;
   },
 
   /**
@@ -99,15 +109,15 @@ var api = {
    * @return {Promise<string>} addr
    */
   newAccount: async (passphrase) => {
-      const account = await api.web3.personal.newAccount(passphrase);
+    const account = await api.web3.personal.newAccount(passphrase);
 
-      //give some money as gas to account to make it able to transaction
-      const txhash = await api.web3.eth.sendTransaction({
-        from: api.web3.eth.coinbase,
-        to: account,
-        value: api.web3.toWei(0.1, "ether")
-      });
-      return account
+    //give some money as gas to account to make it able to transaction
+    const txhash = await api.web3.eth.sendTransaction({
+      from: api.web3.eth.coinbase,
+      to: account,
+      value: api.web3.toWei(0.1, "ether")
+    });
+    return account
   },
 
   receiptlizeTxEvent: async (event) => {

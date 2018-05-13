@@ -18,7 +18,8 @@ const config = {
     secret: 'vbVrtVipfv,dx'
   },
   database: {
-    url : 'mongodb://localhost/coinpocket'
+    // url : 'mongodb://localhost:27017/coinpocket'
+    url : 'mongodb://db:27017/coinpocket'
   }
 }
 
