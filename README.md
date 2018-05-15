@@ -1,7 +1,7 @@
 # coinpocket
-此程式為區塊鏈智能合約(subcurrency)的service gateway
+此程式為區塊鏈智能合約(subcurrency)的Service Gateway
 
-[Android Client](https://github.com/jimliuxyz/coinpocket-android)
+[Android Client](https://github.com/jimliuxyz/coinpocket-android)
 
 <img src="./demo.png" width="400">
 
