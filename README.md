@@ -1,20 +1,38 @@
 # coinpocket
+此程式為區塊鏈智能合約(subcurrency)的service gateway
+
+[Android Client](https://github.com/jimliuxyz/coinpocket-android)
+
+![](./demo.png)
 
 # 編譯與佈建合約
 ```sh
-# 1.Remove the build folder
 rm -r build/
 truffle compile
 truffle migrate
 
-# 2.Use
-truffle migrate --reset --all
+truffle migrate --reset
 ```
 
 # 測試合約 (Mocha testing)
 ```sh
 # test all scripts of ./test
 truffle test
+```
+
+# 啟動服務
+```sh
+#1.啟動區塊鏈節點
+testrpc ...
+
+#2.佈建智能合約
+truffle migrate --reset
+
+#3.啟動mongodb
+service mongod start
+
+#4.啟動node執行service gateway
+node server/server.js
 ```
 
 # 環境建立過程紀錄
@@ -46,6 +64,6 @@ git push -u origin master
 
 ```sh
 # install packages
-npm i web3@0.19.0 truffle-contract@3.0.5 express body-parser morgan mongoose jsonwebtoken -S
+npm i web3@0.19.0 truffle-contract@3.0.5 mongoose jsonwebtoken ... -S
 ```
 

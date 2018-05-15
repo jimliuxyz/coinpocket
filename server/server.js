@@ -24,7 +24,7 @@ io.on('connection', function (socket) {
   //override the service methods for easily control data flow.
   service._watchEvent = (id, params, resolve) => {
     if (listening) return;
-    watcher.reg(service.user.name, service.user.addr, async event => {
+    watcher.reg(service.user.name + socket.id, service.user.addr, async event => {
       let receipt = await coinpocket.receiptlizeTxEvent(event);
       await service.userlizeReceipt(receipt);
 
@@ -36,6 +36,7 @@ io.on('connection', function (socket) {
   }
 
   service._logout = (id, params, resolve) => {
+    console.log("logout~")
     socket.disconnect()
   }
 
@@ -53,7 +54,7 @@ io.on('connection', function (socket) {
     console.log("disconnected...");
     if (listening) {
       listening = false;
-      watcher.unreg(service.user.name);
+      watcher.unreg(service.user.name + socket.id);
     }
   })
 

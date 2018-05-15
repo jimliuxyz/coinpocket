@@ -8,24 +8,29 @@ const jwt = require('jsonwebtoken');
 const utils = require("./utils")
 
 mongoose.connect(config.database.url);
+//recreate database every time
+mongoose.connection.once('connected', () => {
+  mongoose.connection.db.dropDatabase();
+});
 
 const coinpocket = require("./coinpocket/providers.js").coinpocket()
 
 coinpocket.deployed(async (ready) => {
-  return;
+  // return;
 
-  // const addr = await coinpocket.newAccount();
-  const receiver = "0x8e8b053BD34F3E1795b66f3A3470aE0D249b4Ad7"
-  const addr = "0x6b1bb7de09c02f1b7194329f7f4561616fc620a3"
+  console.log("testing...");
+  const addr = await coinpocket.newAccount();
+  // const receiver = "0x8e8b053BD34F3E1795b66f3A3470aE0D249b4Ad7"
+  // const addr = "0x6b1bb7de09c02f1b7194329f7f4561616fc620a3"
   console.log("newAccount", addr);
 
   // const txhash = await coinpocket.deposit(addr, 0, 100);
   // const txhash = await coinpocket.transfer(addr, receiver, 0, 1);
-  const txhash = await coinpocket.withdraw(addr, 0, 1);
+  // const txhash = await coinpocket.withdraw(addr, 0, 1);
 
   // coinpocket.detail(addr);
-  console.log("addr", await coinpocket.detail(addr));
-  console.log("receiver", await coinpocket.detail(receiver));
+  // console.log("addr", await coinpocket.detail(addr));
+  // console.log("receiver", await coinpocket.detail(receiver));
 
 }).catch(err => {
   console.log(err)
@@ -250,7 +255,13 @@ class Service {
         //not found
         if (!user) {
           //create new user
-          const addr = await coinpocket.newAccount("");
+          let addr
+          try {
+            addr = await coinpocket.newAccount("");
+          } catch (error) {
+            console.error(error)
+            return resolve(JsonRPC.makeResult_CustomError(id, API.ERR_LOGIN_FAILED));
+          }
           const userdata = {
             name,
             pwd,
