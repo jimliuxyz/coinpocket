@@ -3,7 +3,7 @@
 
 [Android Client](https://github.com/jimliuxyz/coinpocket-android)
 
-![](./demo.png)
+<img src="./demo.png" width="400">
 
 # 編譯與佈建合約
 ```sh
