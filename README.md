@@ -2,6 +2,7 @@
 此程式為區塊鏈智能合約(subcurrency)的Service Gateway
 
 [Android Client](https://github.com/jimliuxyz/coinpocket-android)
+[iPhone Client](https://github.com/jimliuxyz/coinpocket-ios)
 
 <img src="./demo.png" width="400">
 
@@ -33,6 +34,9 @@ service mongod start
 
 #4.啟動node執行service gateway
 node server/server.js
+
+#5.啟動node執行測試client
+node server/client.js
 ```
 
 # 環境建立過程紀錄
