@@ -2,7 +2,7 @@ pragma solidity ^0.4.17;
 
 contract CoinPocket {
     
-    event txlog(string dtypes, string action, uint amount, address receiver);
+    event txlog(string dtypes, string action, uint amount, address sender, address receiver);
 
     uint constant DTYPELEN = 2;
     string[] dtypes = ["TWD", "USD"];
@@ -43,18 +43,18 @@ contract CoinPocket {
     //mint for free
     function deposit(uint dtype, uint amount) checkType(dtype) public{
         users[msg.sender].dollar[dtype] += amount;
-        emit txlog(dtypes[dtype], "deposit", amount, msg.sender);
+        emit txlog(dtypes[dtype], "deposit", amount, msg.sender, msg.sender);
     }
     
     function withdraw(uint dtype, uint amount) checkType(dtype) enought(dtype, amount) public{
         users[msg.sender].dollar[dtype] -= amount;
-        emit txlog(dtypes[dtype], "withdraw", amount, msg.sender);
+        emit txlog(dtypes[dtype], "withdraw", amount, msg.sender, msg.sender);
     }
     
     function transfer(uint dtype, uint amount, address receiver)checkType(dtype) enought(dtype, amount) public{
         users[msg.sender].dollar[dtype] -= amount;
         users[receiver].dollar[dtype] += amount;
-        emit txlog(dtypes[dtype], "transfer", amount, receiver);
+        emit txlog(dtypes[dtype], "transfer", amount, msg.sender, receiver);
     }
     
     function detail() constant public returns(uint[DTYPELEN]){

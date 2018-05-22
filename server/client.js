@@ -19,7 +19,24 @@ var io = require('socket.io-client');
     });
   })
 
+  socket.on('connect__', data => {
+    const request = sapi.login('Jim1qq', '123');
+    jsonrpc.bindResultHandler(request, result => {
+      const request = sapi.listReceipt();
+      socket.emit('jsonrpc', request.toJson());
+
+    })
+    socket.emit('jsonrpc', request.toJson());
+  })
+
   socket.on('connect', data => {
+    const request = sapi.login('guest', '123');
+    jsonrpc.bindResultHandler(request, result => {
+    })
+    socket.emit('jsonrpc', request.toJson());
+  })
+
+  socket.on('connect_', data => {
     console.log("connected...")
 
     //try login...

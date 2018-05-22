@@ -43,12 +43,25 @@ var api = {
 
     console.log(balance.toString())
 
-      const txhash = await api.instance.deposit.sendTransaction(type, amount, {
+      /**
+       * there are two ways to send and get back tx result
+       * 
+       * 1. await instance.deposit.sendTransaction(type, amount, {})
+       * > it'll return fullly information of tx (tx/logs/receipt)
+       * 
+       * 2. await instance.deposit(type, amount, {})
+       * > it'll return a tx hash string only
+       * > this way makes `event watcher of truffle` lost receipt event sometimes
+       * 
+       * http://truffleframework.com/docs/getting_started/contracts
+       */
+      
+      const txinfo = await api.instance.deposit(type, amount, {
         from: addr,
         gas: 300000,
         gasPrice: api.web3.toWei(1, 'wei'),
       });
-      return txhash;
+      return txinfo.tx
   },
 
   /**
@@ -62,16 +75,12 @@ var api = {
   transfer: async (sender, receiver, type, amount, passphrase) => {
       await api.web3.personal.unlockAccount(sender, passphrase);
 
-      // var data = await api.instance.transfer(0, 1, receiver, {
-      //   from: sender,
-      // })
-
-      var txhash = await api.instance.transfer.sendTransaction(type, amount, receiver, {
+      var txinfo = await api.instance.transfer(type, amount, receiver, {
         from: sender,
         gas: 300000,
         gasPrice: api.web3.toWei(1, 'wei'),
       });
-      return txhash;
+      return txinfo.tx;
   },
 
   /**
@@ -84,12 +93,12 @@ var api = {
   withdraw: async (addr, type, amount, passphrase) => {
       await api.web3.personal.unlockAccount(addr, passphrase);
 
-      var txhash = await api.instance.withdraw.sendTransaction(type, amount, {
+      var txinfo = await api.instance.withdraw(type, amount, {
         from: addr,
         gas: 300000,
         gasPrice: api.web3.toWei(1, 'wei'),
       });
-      return txhash;
+      return txinfo.tx;
   },
 
   /**
@@ -123,8 +132,10 @@ var api = {
   },
 
   receiptlizeTxEvent: async (event) => {
-    const tx = api.web3.eth.getTransaction(event.transactionHash);
-    const sender = tx.from;
+    // const tx = api.web3.eth.getTransaction(event.transactionHash);
+    // const sender = tx.from;
+
+    const sender = event.args.sender;
     const receiver = event.args.receiver;
     return {
       txhash: event.transactionHash,
@@ -142,7 +153,7 @@ var api = {
    * @param {Function} callback callback with receipt list
    */
   listReceipt: async (addr, callback) => {
-
+    console.log("try listReceipt...")
     // addr = '0xe3407dfed3582e3e7f16252d8bcbc62ad99eccc7'
     const txEvent = api.instance.txlog({}, {
       fromBlock: 0,
@@ -151,13 +162,18 @@ var api = {
 
     await txEvent.get(async (err, events) => {
       const list = [];
+      // console.log("caller addr : ", addr)
+      console.log("total events", events.length)
+
       if (!err) {
         await utils.asyncForEach(events, async event => {
           const receipt = await api.receiptlizeTxEvent(event);
           if (receipt && (addr == receipt.sender || addr == receipt.receiver))
             list.push(receipt);
-        })
+          })
       }
+      // console.log("list", list.length)
+
       callback(list);
     })
   }

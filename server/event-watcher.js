@@ -27,6 +27,7 @@ coinpocket.deployed(async (instance) => {
     const receiver = event.args.receiver;
     const blockNumber = tx.blockNumber;
 
+    console.log("===event===", event.transactionHash);
     // console.log("===交易資訊===", tx);
     // console.log("===交易事件===", event);
 
